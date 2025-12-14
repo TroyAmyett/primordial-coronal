@@ -24,20 +24,53 @@ export async function POST(request: Request) {
 
         const prompt = generatePrompt(params);
 
-        // TODO: Integrate with actual Image Generation API (OpenAI DALL-E, Stability AI, etc.)
-        // For now, we return the generated prompt and a placeholder image.
+        // DALL-E 3 Integration
+        if (!process.env.OPENAI_API_KEY) {
+            return NextResponse.json(
+                { error: 'OpenAI API Key not configured on server' },
+                { status: 500 }
+            );
+        }
 
-        // Simulating API latency
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Map UI dimensions to DALL-E 3 supported sizes
+        // DALL-E 3 supports: 1024x1024, 1024x1792 (Vertical), 1792x1024 (Horizontal)
+        let size: "1024x1024" | "1024x1792" | "1792x1024" = "1024x1024";
 
-        // Mock response
-        const mockImageUrl = `https://placehold.co/600x400/0a192f/64ffda?text=${encodeURIComponent(usage + ' - ' + subject)}`;
+        if (dimension.includes('Vertical') || dimension.includes('9:16')) {
+            size = "1024x1792";
+        } else if (dimension.includes('Full screen') || dimension.includes('16:9') || dimension.includes('Rectangle')) {
+            size = "1792x1024";
+        } else {
+            size = "1024x1024"; // Square
+        }
 
-        // SAVE FOR FUTURE REFERENCE: Log the prompt to a history file
+        // Initialize OpenAI
+        const { OpenAI } = await import('openai');
+        const openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
+
+        console.log(`Generating image with DALL-E 3. Size: ${size}`);
+
+        const response = await openai.images.generate({
+            model: "dall-e-3",
+            prompt: prompt,
+            size: size,
+            quality: "hd", // High quality for "premium" feel
+            n: 1,
+        });
+
+        const imageUrl = response.data[0].url;
+
+        if (!imageUrl) {
+            throw new Error("No image URL returned from OpenAI");
+        }
+
+        // SAVE FOR FUTURE REFERENCE (Note: This only works locally. Move to DB for Vercel)
         const logEntry = `
 ## ${new Date().toISOString()} - ${usage}
 **Subject:** ${subject}
-**Dimensions:** ${dimension}
+**Dimensions:** ${dimension} (Mapped to: ${size})
 **Prompt:**
 \`\`\`
 ${prompt}
@@ -49,14 +82,13 @@ ${prompt}
             const historyPath = path.join(process.cwd(), 'generated_history.md');
             fs.appendFileSync(historyPath, logEntry);
         } catch (logError) {
-            console.error('Failed to save history:', logError);
+            // Silent fail in production/Vercel
         }
 
         return NextResponse.json({
             success: true,
             prompt: prompt,
-            imageUrl: mockImageUrl,
-            note: "Image generation is mocked. Configure 'src/app/api/generate/route.ts' with a real provider."
+            imageUrl: imageUrl
         });
 
     } catch (error) {
