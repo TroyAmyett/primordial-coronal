@@ -27,6 +27,35 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ imageUrl: string; prompt: string } | null>(null);
 
+  const handleDownload = async () => {
+    if (!result?.imageUrl) return;
+
+    try {
+      // Create SEO-friendly filename
+      const seoFilename = subject
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric chars with hyphens
+        .replace(/(^-|-$)/g, '')     // Remove leading/trailing hyphens
+        + '.png';
+
+      const response = await fetch(result.imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = seoFilename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: just open in new tab if fetch fails (e.g. CORS)
+      window.open(result.imageUrl, '_blank');
+    }
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -155,7 +184,7 @@ export default function Home() {
               Visual Output
             </h2>
 
-            <div className={styles.resultContainer}>
+            <div className={styles.resultContainer} style={{ marginBottom: result?.imageUrl ? '1rem' : 0 }}>
               {result?.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -184,6 +213,17 @@ export default function Home() {
                 </div>
               )}
             </div>
+
+            {result?.imageUrl && (
+              <button onClick={handleDownload} className={styles.secondaryButton}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download .PNG
+              </button>
+            )}
           </section>
 
           {/* Card 3: Exact Prompt */}
