@@ -73,7 +73,7 @@ export default function Home() {
         </header>
 
         <div className={styles.grid}>
-          {/* Form Section */}
+          {/* Card 1: Configuration */}
           <section className={styles.card}>
             <h2 className={styles.cardHeader}>
               <span className={styles.stepNumber}>1</span>
@@ -119,7 +119,7 @@ export default function Home() {
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="e.g., 'Modern office workspace'"
+                  placeholder="e.g., 'Modern optimization dashboard'"
                   required
                   className={styles.input}
                 />
@@ -132,7 +132,7 @@ export default function Home() {
                 <textarea
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Specific lighting, objects to include/exclude..."
+                  placeholder="Lighting, specific elements..."
                   rows={3}
                   className={styles.textarea}
                 />
@@ -148,29 +148,21 @@ export default function Home() {
             </form>
           </section>
 
-          {/* Result Section */}
+          {/* Card 2: Image Result */}
           <section className={styles.card}>
             <h2 className={styles.cardHeader}>
               <span className={styles.stepNumber}>2</span>
-              Result
+              Visual Output
             </h2>
 
             <div className={styles.resultContainer}>
-              {result ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={result.imageUrl}
-                    alt={subject}
-                    className={styles.imageResult}
-                  />
-                  <div className={styles.promptBox}>
-                    <p className={styles.promptLabel}>Generated Prompt:</p>
-                    <pre className={styles.promptText}>
-                      {result.prompt}
-                    </pre>
-                  </div>
-                </>
+              {result?.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={result.imageUrl}
+                  alt={subject}
+                  className={styles.imageResult}
+                />
               ) : (
                 <div className={styles.placeholder}>
                   {!loading && (
@@ -180,15 +172,35 @@ export default function Home() {
                         <circle cx="8.5" cy="8.5" r="1.5"></circle>
                         <polyline points="21 15 16 10 5 21"></polyline>
                       </svg>
-                      <p>Your generated design will appear here.</p>
+                      <p>Generated image will appear here.</p>
                     </>
                   )}
                   {loading && (
                     <>
                       <div className={styles.spinner}></div>
-                      <p style={{ color: 'var(--primary)' }}>Constructing prompt & imagining...</p>
+                      <p style={{ color: 'var(--primary)' }}>Constructing & Rendering...</p>
                     </>
                   )}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Card 3: Exact Prompt */}
+          <section className={styles.card}>
+            <h2 className={styles.cardHeader}>
+              <span className={styles.stepNumber}>3</span>
+              Prompt Data
+            </h2>
+
+            <div className={styles.promptContainer}>
+              {result?.prompt ? (
+                <pre className={styles.promptText}>
+                  {result.prompt}
+                </pre>
+              ) : (
+                <div className={styles.emptyPrompt}>
+                  <p>Detailed prompt will appear here.</p>
                 </div>
               )}
             </div>
